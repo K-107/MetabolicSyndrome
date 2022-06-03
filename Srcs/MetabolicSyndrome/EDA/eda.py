@@ -2,7 +2,7 @@ import csv
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-
+import seaborn as sns
 
 # koges dataset
 ko = pd.read_csv('/Data2/Dataset/KoGES/KoGES_followup/KoGES_total.csv')
@@ -14,9 +14,7 @@ myungi = pd.read_excel('/Data2/Dataset/Myongji/Myongji_2019-2021.xlsx', sheet_na
 
 # koges dataset
 def koges1():
-	# 결측치 개수 확인
-	null_ko = ko.isnull()
-	null_ko.sum()
+	ko
 
 # myungi dataset
 def myungi1():
@@ -35,7 +33,14 @@ def myungi1():
 
 	# nan column delete
 	myungi_1_2 = myungi_1.drop(['Unnamed: 0','Unnamed: 16', 'Unnamed: 17', 'Unnamed: 18'],axis=1)
-	print(myungi_1_2)
+	#print(myungi_1_2)
+
+	# pearson
+	corr = myungi_1_2.corr()
+	#print(corr)
+	
+
 
 if __name__ == '__main__':
 	myungi1()
+	#koges1()
