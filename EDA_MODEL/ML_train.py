@@ -62,12 +62,18 @@ def data_split(train_path):
     X_train1, X_test, y_train1, y_test = train_test_split(train, target, test_size=0.1, stratify=target, random_state=107)
     X_train, X_valid, y_train, y_valid = train_test_split(X_train1, y_train1, test_size=0.1, stratify=y_train1, random_state=107)
     
-    scaler = MinMaxScaler()
-    X_train = scaler.fit_transform(X_train)
-    X_valid = scaler.transform(X_valid)
-    X_test = scaler.transform(X_test)
+    column_names = X_train1.columns
     
-    return X_train1, X_train, X_valid, X_test, y_train1, y_train, y_valid, y_test
+    scaler = MinMaxScaler()
+    scaler.fit(X_train)
+    X_train_scaled = scaler.transform(X_train)
+    X_valid_scaled = scaler.transform(X_valid)
+    
+    scaler.fit(X_train1)
+    X_train1_scaled = scaler.transform(X_train1)
+    X_test_scaled = scaler.transform(X_test)
+    
+    return X_train1_scaled, X_train_scaled, X_valid_scaled, X_test_scaled, y_train1, y_train, y_valid, y_test, column_names
         
 
 # 훈련시간 측정 함수
@@ -104,7 +110,7 @@ def plot_feature_importance(importance, names, model_name):
     plt.ylabel('FEATURE NAMES')
     plt.close()
     plt.savefig(f'train_result_img/{model_name}_plot_feature_importance.jpg')
-    
+    `
     
 # 모델 선택
 def model_selection(model_name, study):
@@ -196,8 +202,7 @@ def objective(trial: Trial, model_name, X_train, X_valid, y_train, y_valid):
 # 트레인 함수
 def train_optuna(model_name, trial_num, train_path, stacking=False):
     
-    X_train1, X_train, X_valid, X_test, y_train1, y_train, y_valid, y_test = data_split(train_path)
-    column_names = X_train1.columns
+    X_train1, X_train, X_valid, X_test, y_train1, y_train, y_valid, y_test, column_names = data_split(train_path)
     
     createDirectory('train_result_img')
     createDirectory('result_csv')
