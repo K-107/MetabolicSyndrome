@@ -19,7 +19,7 @@ from optuna import Trial, visualization
 from optuna.samplers import TPESampler
 
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, Binarizer
 from sklearn.metrics import f1_score, accuracy_score, confusion_matrix, precision_score, recall_score
 import sklearn.metrics
 
@@ -110,7 +110,7 @@ def plot_feature_importance(importance, names, model_name):
     plt.ylabel('FEATURE NAMES')
     plt.close()
     plt.savefig(f'train_result_img/{model_name}_plot_feature_importance.jpg')
-    `
+    
     
 # 모델 선택
 def model_selection(model_name, study):
@@ -198,9 +198,23 @@ def objective(trial: Trial, model_name, X_train, X_valid, y_train, y_valid):
     
     return f1
 
+# 평가함수
+def get_clf_eval(y_test, pred):
+    accuracy = accuracy_score(y_test, pred)
+    f1 = f1_score(y_test, pred)
+    precision = precision_score(y_test, pred)
+    recall = recall_score(y_test, pred)
+    cm = confusion_matrix(y_test, pred)
+    print('accuracy: {0:.4f}'.format(accuracy))
+    print('f1: {0:.4f}'.format(f1))
+    print('precision: {0:.4f}'.format(precision))
+    print('recall(Sensitiviy): {0:.4f}'.format(recall))
+    print('Specificity: ', round(cm[0][0]/(cm[0][0]+cm[0][1]) ,4))
+    print('confusion_matrix: ')
+    print(cm)
 
 # 트레인 함수
-def train_optuna(model_name, trial_num, train_path, stacking=False):
+def train_optuna(model_name, trial_num, train_path, threshold, stacking=False):
     
     X_train1, X_train, X_valid, X_test, y_train1, y_train, y_valid, y_test, column_names = data_split(train_path)
     
@@ -252,16 +266,15 @@ def train_optuna(model_name, trial_num, train_path, stacking=False):
         pred = model.predict(X_test)
         
         print('5.모델 예측 결과')
-        accuracy = accuracy_score(y_test, pred)
-        f1 = f1_score(y_test, pred)
-        precision = precision_score(y_test, pred)
-        recall = recall_score(y_test, pred)
-        print('accuracy: {0:.4f}'.format(accuracy))
-        print('f1: {0:.4f}'.format(f1))
-        print('precision: {0:.4f}'.format(precision))
-        print('recall: {0:.4f}'.format(recall))
-        print('confusion_matrix: ')
-        print(confusion_matrix(y_test, pred))
+        get_clf_eval(y_test, pred)
+        
+        print(f'6.임계값 {threshold}으로 모델 예측 결과')
+        pred_proba = model.predict_proba(X_test)
+        custom_threshold = threshold
+        pred_proba_1 = pred_proba[:,1].reshape(-1,1)
+        binarizer = Binarizer(threshold=custom_threshold).fit(pred_proba_1)
+        custom_predict = binarizer.transform(pred_proba_1)
+        get_clf_eval(y_test, custom_predict)
 
         memory_usage("학습하는데 걸린 시간  {:.2f} 분\n".format( (time.time() - train_start)/60))
         
